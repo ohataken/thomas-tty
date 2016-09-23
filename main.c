@@ -40,13 +40,33 @@ int main(void) {
 
     tcsetattr(fd, TCSAFLUSH, &tios);
 
-    sleep(3);
+    /* - - - */
 
-    unsigned char ch[] = {getchar()};
+    struct timeval timeval;
+    fd_set readfds;
 
-    write(fd, "got character: ", 15);
-    write(fd, ch, 1);
-    write(fd, "\n\r", 2);
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+
+    timeval.tv_sec = 5;
+    timeval.tv_usec = 0;
+
+    for (int i = 0; i < 10; ++i) {
+        select(fd + 1, &readfds, NULL, NULL, &timeval);
+        timeval.tv_sec = 5;
+        timeval.tv_usec = 0;
+
+        if (FD_ISSET(fd, &readfds)) {
+            char buf[1];
+            read(fd, buf, 1);
+            printf("got: %s\r\n", buf);
+        } else {
+            printf("else\r\n");
+            FD_SET(fd, &readfds);
+        }
+    }
+
+    /* - - - */
 
     tcsetattr(fd, TCSAFLUSH, &orig_tios);
 
